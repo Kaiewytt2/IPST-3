@@ -15,9 +15,11 @@ export const loginUser = async (login, password) => {
         throw new Error('Ошибка при входе');
     }
     const data = await response.json();
-    console.log('loginUser ответ:', data);
-    localStorage.setItem("token", data.token)
-    return decodeJwtToken(data.token);
+
+    const userData = decodeJwtToken(data.token)
+    localStorage.setItem('userData', JSON.stringify(userData))
+    localStorage.setItem('token', data.token);
+    return userData;
 };
 
 export const registerUser = async (login, password) => {
@@ -32,9 +34,12 @@ export const registerUser = async (login, password) => {
     if (!response.ok) {
         throw new Error('Ошибка при регистрации');
     }
+
     const data = await response.json();
-    console.log('registerUser ответ:', data);
-    return decodeJwtToken(data.token);
+    const userData = decodeJwtToken(data.token)
+    localStorage.setItem('userData', JSON.stringify(userData))
+    localStorage.setItem('token', data.token)
+    return userData;
 };
 
 function decodeJwtToken(token) {
@@ -47,4 +52,3 @@ function decodeJwtToken(token) {
         return null;
     }
 }
-
