@@ -16,6 +16,7 @@ const Home = () => {
     const [newFolderName, setNewFolderName] = useState('');
     const [selectedFile, setSelectedFile] = useState(null);
 
+
     const [formData, setFormData] = useState({
         name: '',
         parentId: "root",
@@ -33,6 +34,48 @@ const Home = () => {
             setFiles(folderResponse.data.data.files);
         } catch (error) {
             console.error('Error loading folder:', error);
+        }
+    };
+
+    const handleFileChange = (event) => {
+        setSelectedFile(event.target.files[0]);
+    };
+
+    const handleFileUpload = async () => {
+        if (!selectedFile) return;
+
+        const formData = new FormData();
+        formData.append('file', selectedFile);
+
+        try {
+            const response = await axios.post('http://5.35.93.223:7000/drive/upload', formData, {
+                headers: {
+                    'Content-Type': 'multipart/form-data',
+                    Authorization: `Bearer ${localStorage.getItem("token")}`,
+                },
+            });
+
+            if (response.status === 200) {
+                const uploadedFile = response.data.data;
+                setFiles(prevFiles => [...prevFiles, uploadedFile]);
+                setSelectedFile(null);
+            }
+        } catch (error) {
+            console.error('Error uploading file:', error);
+        }
+    };
+
+    const handleFileDelete = async (fileId) => {
+        try {
+            const response = await axios.delete(`http://5.35.93.223:7000/drive/file/${fileId}`, {
+                headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+            });
+
+            if (response.status === 200) {
+                setFiles(prevFiles => prevFiles.filter(file => file.id !== fileId));
+            }
+        } catch (error) {
+            console.error('Error deleting file:', error);
         }
     };
 
@@ -55,7 +98,7 @@ const Home = () => {
             }, { headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } });
             if (response.status === 200) {
                 const newFolder = response.data.data;
-                setFolders(prevFolders => [...prevFolders, newFolder]);
+                loadFolder("root");
                 setNewFolderName('');
             }
         } catch (error) {
@@ -67,6 +110,7 @@ const Home = () => {
         setNewFolderName(event.target.value);
     };
 
+    //test
     const loadFiles = async (folderId) => {
         try {
             const folderResponse = await axios.get(`http://5.35.93.223:7000/drive/folder/${folderId}`, { headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } });
@@ -200,13 +244,14 @@ const Home = () => {
             <Grid container spacing={2}>
                 {folders && folders.map((folder) => (
                     <Grid item key={folder.id}>
-                        <Card onClick={() => handleFolderClick(folder)}>
+                        <Card>
                             <CardContent>
                                 <Typography variant="h5" component="h2">
                                     {folder.name}
                                 </Typography>
                                 <IconButton onClick={() => handleDelete(folder.id, 'folder')}>Удалить</IconButton>
                                 <IconButton onClick={handleEditFolder}>Редактировать</IconButton>
+                                <IconButton onClick={() => handleFolderClick(folder)}>Перейти</IconButton>
                             </CardContent>
                         </Card>
                     </Grid>
