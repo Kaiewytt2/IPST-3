@@ -1,12 +1,22 @@
-import React, { useState, useEffect } from 'react';
+import React, {useState, useEffect} from 'react';
 import {
-    Typography, Button, Modal, TextField, FormControl, InputLabel, Input, IconButton, Grid, Card, CardContent
+    Typography,
+    Button,
+    Modal,
+    TextField,
+    FormControl,
+    InputLabel,
+    Input,
+    IconButton,
+    Grid,
+    Card,
+    CardContent, Link
 } from '@mui/material';
 import useAuth from "../useAuth";
 import axios from 'axios';
 
 const Home = () => {
-    const { logout } = useAuth();
+    const {logout} = useAuth();
     const [currentFolder, setCurrentFolder] = useState(null);
     const [folders, setFolders] = useState([]);
     const [files, setFiles] = useState([]);
@@ -14,8 +24,6 @@ const Home = () => {
     const [modalType, setModalType] = useState('');
     const [folderPath, setFolderPath] = useState(['root']);
     const [newFolderName, setNewFolderName] = useState('');
-    const [selectedFile, setSelectedFile] = useState(null);
-
 
     const [formData, setFormData] = useState({
         name: '',
@@ -23,12 +31,13 @@ const Home = () => {
     });
 
     useEffect(() => {
+
         loadFolder(folderPath[folderPath.length - 1]);
     }, [folderPath]);
 
     const loadFolder = async (folderId) => {
         try {
-            const folderResponse = await axios.get(`http://5.35.93.223:7000/drive/folder/${folderId}`, { headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } });
+            const folderResponse = await axios.get(`http://5.35.93.223:7000/drive/folder/${folderId}`, {headers: {Authorization: `Bearer ${localStorage.getItem("token")}`}});
             setCurrentFolder(folderResponse.data.data);
             setFolders(folderResponse.data.data.children);
             setFiles(folderResponse.data.data.files);
@@ -37,55 +46,14 @@ const Home = () => {
         }
     };
 
-    const handleFileChange = (event) => {
-        setSelectedFile(event.target.files[0]);
-    };
-
-    const handleFileUpload = async () => {
-        if (!selectedFile) return;
-
-        const formData = new FormData();
-        formData.append('file', selectedFile);
-
-        try {
-            const response = await axios.post('http://5.35.93.223:7000/drive/upload', formData, {
-                headers: {
-                    'Content-Type': 'multipart/form-data',
-                    Authorization: `Bearer ${localStorage.getItem("token")}`,
-                },
-            });
-
-            if (response.status === 200) {
-                const uploadedFile = response.data.data;
-                setFiles(prevFiles => [...prevFiles, uploadedFile]);
-                setSelectedFile(null);
-            }
-        } catch (error) {
-            console.error('Error uploading file:', error);
-        }
-    };
-
-    const handleFileDelete = async (fileId) => {
-        try {
-            const response = await axios.delete(`http://5.35.93.223:7000/drive/file/${fileId}`, {
-                headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
-            });
-
-            if (response.status === 200) {
-                setFiles(prevFiles => prevFiles.filter(file => file.id !== fileId));
-            }
-        } catch (error) {
-            console.error('Error deleting file:', error);
-        }
-    };
-
     const handleFolderClick = (folder) => {
-        setFolderPath(prevPath => [...prevPath, folder.id]);
+        setFolderPath(prevPath => [...prevPath, folder.id]); // Добавляем идентификатор папки в путь
     };
+
 
     const handleBackClick = () => {
         if (folderPath.length > 1) {
-            setFolderPath(prevPath => prevPath.slice(0, -1));
+            setFolderPath(prevPath => prevPath.slice(0, -1)); // Удаляем последний идентификатор из пути
         }
     };
 
@@ -95,11 +63,12 @@ const Home = () => {
             const response = await axios.post(`http://5.35.93.223:7000/drive/folder`, {
                 name: newFolderName,
                 parentId: currentFolderId
-            }, { headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } });
+            }, {headers: {Authorization: `Bearer ${localStorage.getItem("token")}`}});
             if (response.status === 200) {
+                // Обновляем список папок в текущей директории
                 const newFolder = response.data.data;
-                loadFolder("root");
-                setNewFolderName('');
+                setFolders(prevFolders => [...prevFolders, newFolder]); // Добавляем новую папку в состояние
+                setNewFolderName(''); // Очищаем поле ввода после создания папки
             }
         } catch (error) {
             console.error('Error creating folder:', error);
@@ -108,18 +77,6 @@ const Home = () => {
 
     const handleNewFolderNameChange = (event) => {
         setNewFolderName(event.target.value);
-    };
-
-    //test
-    const loadFiles = async (folderId) => {
-        try {
-            const folderResponse = await axios.get(`http://5.35.93.223:7000/drive/folder/${folderId}`, { headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } });
-            setCurrentFolder(folderResponse.data.data);
-            setFiles(folderResponse.data.data.children);
-            return folderResponse.data.data.children;
-        } catch (error) {
-            console.error('Error loading folder:', error);
-        }
     };
 
     const handleModalOpen = (type) => {
@@ -135,21 +92,22 @@ const Home = () => {
             parentId: currentFolder ? currentFolder.id : null,
             file: null,
         });
-        setSelectedFile(null);
     };
 
     const handleFormSubmit = async (event) => {
         event.preventDefault();
-
         try {
             if (modalType === 'folder') {
                 if (currentFolder) {
+                    // Если есть текущая папка, это редактирование
                     const response = await axios.patch(
                         `http://5.35.93.223:7000/drive/folder/${currentFolder.id}`,
-                        { name: formData.name },
-                        { headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } }
+                        {name: formData.name},
+                        {headers: {Authorization: `Bearer ${localStorage.getItem("token")}`}}
                     );
                     if (response.status === 200) {
+                        console.log('Folder updated successfully:', response.data);
+                        // Обновляем список папок в текущей директории
                         const updatedFolder = response.data.data;
                         setFolders(prevFolders => {
                             const updatedFolders = [...prevFolders];
@@ -161,25 +119,34 @@ const Home = () => {
                         });
                     }
                 } else {
-                    const response = await axios.post('http://5.35.93.223:7000/drive/folder', formData, { headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } });
+                    // Если нет текущей папки, это создание
+                    const response = await axios.post('http://5.35.93.223:7000/drive/folder', formData, {headers: {Authorization: `Bearer ${localStorage.getItem("token")}`}});
                     if (response.status === 200) {
+                        // Обновляем список папок в текущей директории
                         const newFolder = response.data.data;
-                        setFolders(prevFolders => [...prevFolders, newFolder]);
+                        setFolders(prevFolders => [...prevFolders, newFolder]); // Добавляем новую папку в состояние
                     }
                 }
             } else if (modalType === 'file') {
-                const formData = new FormData();
-                formData.append('folderId', currentFolder.id);
-                formData.append('file', selectedFile);
+                const resformdata = new FormData();
+                resformdata.append('file', formData.file);
+                resformdata.append('folderId', formData.folderId);
 
-                const response = await axios.post('http://5.35.93.223:7000/drive/files', formData, {
-                    headers: { Authorization: `Bearer ${localStorage.getItem("token")}`, 'Content-Type': 'multipart/form-data' },
-                });
+                try {
+                    const response = await axios.post('http://5.35.93.223:7000/drive/files', formData, {
+                        headers: {
+                            'Content-Type': 'multipart/form-data',
+                            Authorization: `Bearer ${localStorage.getItem("token")}`
+                        }
+                    });
 
-                if (response.status === 200) {
-                    console.log('File uploaded successfully:', response.data);
-                    loadFolder(currentFolder.id);
+                    if (response.status === 200) {
+                        console.log('Файл успешно загружен', response.data);
+                    }
+                } catch (error) {
+                    console.error('Ошибка при загрузке файла', error);
                 }
+
             }
             handleModalClose();
         } catch (error) {
@@ -197,9 +164,9 @@ const Home = () => {
             const confirmDelete = window.confirm(`Вы уверены, что хотите удалить этот ${type}?`);
             if (confirmDelete) {
                 if (type === 'folder') {
-                    await axios.delete(`http://5.35.93.223:7000/drive/folder/${id}`, { headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } });
+                    await axios.delete(`http://5.35.93.223:7000/drive/folder/${id}`, {headers: {Authorization: `Bearer ${localStorage.getItem("token")}`}});
                 } else if (type === 'file') {
-                    await axios.delete(`http://5.35.93.223:7000/drive/files/${id}`, { headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } });
+                    await axios.delete(`http://5.35.93.223:7000/drive/files/${id}`, {headers: {Authorization: `Bearer ${localStorage.getItem("token")}`}});
                 }
                 loadFolder(currentFolder ? currentFolder.id : 'root');
             }
@@ -208,7 +175,9 @@ const Home = () => {
         }
     };
 
-    const handleEditFolder = () => {
+    const handleEditFolder = (folder) => {
+        setCurrentFolder(folder)
+        console.log(currentFolder.parentId)
         setFormData({
             name: currentFolder.name,
             parentId: currentFolder.parentId,
@@ -220,10 +189,11 @@ const Home = () => {
         try {
             const response = await axios.patch(
                 `http://5.35.93.223:7000/drive/folder/${currentFolder.id}`,
-                { parentId: newParentId },
-                { headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } }
+                {parentId: newParentId},
+                {headers: {Authorization: `Bearer ${localStorage.getItem("token")}`}}
             );
             if (response.status === 200) {
+                // Обновляем список папок в текущей и новой директории
                 loadFolder(currentFolder.parentId);
                 loadFolder(newParentId);
                 handleModalClose();
@@ -247,31 +217,21 @@ const Home = () => {
                         <Card>
                             <CardContent>
                                 <Typography variant="h5" component="h2">
-                                    {folder.name}
+                                    {folder.name ? folder.name : folder.file.name}
                                 </Typography>
-                                <IconButton onClick={() => handleDelete(folder.id, 'folder')}>Удалить</IconButton>
-                                <IconButton onClick={handleEditFolder}>Редактировать</IconButton>
-                                <IconButton onClick={() => handleFolderClick(folder)}>Перейти</IconButton>
+                                <IconButton onClick={() => handleDelete(folder.id, !folder.file?.name ? 'folder': 'file')}>Удалить</IconButton>
+                                {!folder.file?.name &&
+                                    <IconButton onClick={() => handleEditFolder(folder)}>Редактировать</IconButton>}
+                                {!folder.file?.name ?
+                                    <IconButton onClick={() => handleFolderClick(folder)}>перейти</IconButton> :
+                                    <Link href={folder.file.filepath}>Открыть файл</Link>}
                             </CardContent>
                         </Card>
                     </Grid>
                 ))}
             </Grid>
 
-            <Grid container spacing={2} style={{ marginTop: 20 }}>
-                {files && files.map((file) => (
-                    <Grid item key={file.id}>
-                        <Card>
-                            <CardContent>
-                                <Typography variant="h5" component="h2">
-                                    {file.name}
-                                </Typography>
-                                <IconButton onClick={() => handleDelete(file.id, 'file')}>Удалить</IconButton>
-                            </CardContent>
-                        </Card>
-                    </Grid>
-                ))}
-            </Grid>
+
             <Button variant="contained" onClick={handleBackClick} disabled={folderPath.length <= 1}>
                 Назад
             </Button>
@@ -298,55 +258,61 @@ const Home = () => {
                     padding: 20,
                     borderRadius: 8
                 }}>
-                    <Typography variant="h5">{modalType === 'folder' ? 'Создать/Редактировать папку' : 'Загрузить файл'}</Typography>
-                    <form onSubmit={handleFormSubmit} encType="multipart/form-data">
-                        <FormControl fullWidth style={{ marginTop: 10 }}>
+                    <Typography
+                        variant="h5">{modalType === 'folder' ? 'Создать/Редактировать папку' : 'Загрузить файл'}</Typography>
+                    <form onSubmit={handleFormSubmit}>
+                        <FormControl fullWidth style={{marginTop: 10}}>
                             <InputLabel htmlFor="name">Название</InputLabel>
                             <Input
                                 id="name"
                                 type="text"
                                 value={formData.name}
-                                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                                onChange={(e) => setFormData({...formData, name: e.target.value})}
                                 required
                             />
                         </FormControl>
                         {modalType === 'file' && (
-                            <FormControl fullWidth style={{ marginTop: 10 }}>
+                            <FormControl fullWidth style={{marginTop: 10}}>
                                 <InputLabel htmlFor="file">Файл</InputLabel>
                                 <Input
                                     id="file"
                                     type="file"
-                                    onChange={(e) => setSelectedFile(e.target.files[0])}
+                                    onChange={(e) => {
+                                        if (e.target.files && e.target.files.length > 0) {
+                                            setFormData(prevState => ({
+                                                ...prevState,
+                                                file: e.target.files[0],
+                                                folderId: currentFolder.id
+                                            }));
+                                        } else console.log("Ничего")
+                                    }}
                                     required
                                 />
+                                <Button type="submit">Загрузить</Button>
                             </FormControl>
                         )}
-                        {modalType === 'file' && (
-                            <Button type="submit" variant="contained" color="primary" style={{ marginTop: 10 }}>
-                                Загрузить
-                            </Button>
-                        )}
                         {modalType === 'folder' && (
-                            <Button type="submit" variant="contained" color="primary" style={{ marginTop: 10 }}>
+                            <Button type="submit" variant="contained" color="primary" style={{marginTop: 10}}>
                                 {currentFolder ? 'Сохранить' : 'Создать'}
                             </Button>
                         )}
                         {modalType === 'folder' && (
-                            <Button onClick={handleModalClose} variant="contained" style={{ marginTop: 10 }}>
+                            <Button onClick={handleModalClose} variant="contained" style={{marginTop: 10}}>
                                 Отмена
                             </Button>
                         )}
                     </form>
                     {modalType === 'folder' && currentFolder && (
                         <div>
-                            <Typography variant="h6" style={{ marginTop: 20 }}>Переместить в:</Typography>
-                            <Button onClick={() => handleMoveFolder('root')} variant="outlined" style={{ marginTop: 10 }}>
+                            <Typography variant="h6" style={{marginTop: 20}}>Переместить в:</Typography>
+                            <Button onClick={() => handleMoveFolder('root')} variant="outlined" style={{marginTop: 10}}>
                                 Корневую папку
                             </Button>
                             {folders.map((folder) => (
                                 <div key={folder.id}>
                                     {folder.id !== currentFolder.id && (
-                                        <Button onClick={() => handleMoveFolder(folder.id)} variant="outlined" style={{ marginTop: 10 }}>
+                                        <Button onClick={() => handleMoveFolder(folder.id)} variant="outlined"
+                                                style={{marginTop: 10}}>
                                             {folder.name}
                                         </Button>
                                     )}
