@@ -47,13 +47,13 @@ const Home = () => {
     };
 
     const handleFolderClick = (folder) => {
-        setFolderPath(prevPath => [...prevPath, folder.id]); // Добавляем идентификатор папки в путь
+        setFolderPath(prevPath => [...prevPath, folder.id]);
     };
 
 
     const handleBackClick = () => {
         if (folderPath.length > 1) {
-            setFolderPath(prevPath => prevPath.slice(0, -1)); // Удаляем последний идентификатор из пути
+            setFolderPath(prevPath => prevPath.slice(0, -1));
         }
     };
 
@@ -65,10 +65,9 @@ const Home = () => {
                 parentId: currentFolderId
             }, {headers: {Authorization: `Bearer ${localStorage.getItem("token")}`}});
             if (response.status === 200) {
-                // Обновляем список папок в текущей директории
                 const newFolder = response.data.data;
-                setFolders(prevFolders => [...prevFolders, newFolder]); // Добавляем новую папку в состояние
-                setNewFolderName(''); // Очищаем поле ввода после создания папки
+                setFolders(prevFolders => [...prevFolders, newFolder]);
+                setNewFolderName('');
             }
         } catch (error) {
             console.error('Error creating folder:', error);
@@ -99,7 +98,6 @@ const Home = () => {
         try {
             if (modalType === 'folder') {
                 if (currentFolder) {
-                    // Если есть текущая папка, это редактирование
                     const response = await axios.patch(
                         `http://5.35.93.223:7000/drive/folder/${currentFolder.id}`,
                         {name: formData.name},
@@ -107,7 +105,6 @@ const Home = () => {
                     );
                     if (response.status === 200) {
                         console.log('Folder updated successfully:', response.data);
-                        // Обновляем список папок в текущей директории
                         const updatedFolder = response.data.data;
                         setFolders(prevFolders => {
                             const updatedFolders = [...prevFolders];
@@ -119,12 +116,10 @@ const Home = () => {
                         });
                     }
                 } else {
-                    // Если нет текущей папки, это создание
                     const response = await axios.post('http://5.35.93.223:7000/drive/folder', formData, {headers: {Authorization: `Bearer ${localStorage.getItem("token")}`}});
                     if (response.status === 200) {
-                        // Обновляем список папок в текущей директории
                         const newFolder = response.data.data;
-                        setFolders(prevFolders => [...prevFolders, newFolder]); // Добавляем новую папку в состояние
+                        setFolders(prevFolders => [...prevFolders, newFolder]);
                     }
                 }
             } else if (modalType === 'file') {
@@ -193,7 +188,6 @@ const Home = () => {
                 {headers: {Authorization: `Bearer ${localStorage.getItem("token")}`}}
             );
             if (response.status === 200) {
-                // Обновляем список папок в текущей и новой директории
                 loadFolder(currentFolder.parentId);
                 loadFolder(newParentId);
                 handleModalClose();
